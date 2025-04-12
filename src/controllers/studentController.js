@@ -1,5 +1,6 @@
 // controllers/studentController.js
 const User = require('../models/User');
+const WorkExperience = require("../models/WorkExperience");
 
 const searchStudents = async (req, res) => {
     const { query } = req.query;
@@ -26,4 +27,21 @@ const searchStudents = async (req, res) => {
     }
 };
 
-module.exports = { searchStudents };
+const getStudentById = async (req, res) => {
+    try {
+        const user = await User.findByPk(req.params.id, {
+            include: [WorkExperience],
+        });
+
+        if (!user || !user.is_active_resume) {
+            return res.status(404).json({ message: "Студент не найден" });
+        }
+
+        res.json(user);
+    } catch (err) {
+        console.error("Ошибка при получении студента:", err);
+        res.status(500).json({ message: `Ошибка при получении студента: ${err.message}` });
+    }
+};
+
+module.exports = { getStudentById, searchStudents };
