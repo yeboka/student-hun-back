@@ -1,4 +1,6 @@
 const Job = require('../models/Job');
+const Application = require('../models/Application');
+const User = require('../models/User');
 const {logger} = require("sequelize/lib/utils/logger");
 
 // Create Job
@@ -60,6 +62,70 @@ const searchJobsText = async (req, res) => {
     }
 };
 
+const getApplicantsForJob = async (req, res) => {
+    const jobId = req.params.jobId; // Получаем ID вакансии
+
+    try {
+        // Находим отклики для указанной вакансии
+        const applications = await Application.findAll({
+            where: { jobId }, // Ищем отклики для этой вакансии
+            include: [{
+                model: User,
+                attributes: ['id', 'first_name', 'last_name', 'email'], // Добавляем информацию о пользователе
+            }],
+        });
+
+        // Возвращаем информацию об откликнувшихся пользователях
+        const applicants = applications.map(application => application.User);
+        res.json(applicants);
+    } catch (err) {
+        res.status(500).json({ message: `Ошибка при получении откликов: ${err.message}` });
+    }
+};
+
+
+const getJobsWithApplications = async (req, res) => {
+    const userId = req.user.id; // Получаем ID авторизованного пользователя
+
+    try {
+        // Находим вакансии, на которые откликнулся пользователь
+        const applications = await Application.findAll({
+            where: { userId }, // Ищем все отклики текущего пользователя
+        });
+
+        // Получаем только те вакансии, на которые был отклик
+        const jobIds = applications.map((application) => application.jobId);
+
+        const jobs = await Job.findAll({
+            where: { id: jobIds }, // Ищем только те вакансии, которые есть в откликах
+            order: [['createdAt', 'DESC']], // Сортируем по дате создания
+        });
+
+        // Добавляем поле isApplied для каждой вакансии (оно всегда будет true)
+        const jobsWithApplications = jobs.map((job) => {
+            job.isApplied = true; // Пользователь подался на эту вакансию
+            return job;
+        });
+
+        res.json(jobsWithApplications);
+    } catch (err) {
+        res.status(500).json({ message: `Ошибка при получении вакансий: ${err.message}` });
+    }
+};
+
+
+const getUserJobs = async (req, res) => {
+    try {
+        const jobs = await Job.findAll({
+            where: { userId: req.user.id }, // Ищем вакансии, принадлежащие текущему пользователю
+            order: [['createdAt', 'DESC']], // Сортируем по дате создания
+        });
+
+        res.json(jobs);
+    } catch (err) {
+        res.status(500).json({ message: `Ошибка при получении вакансий: ${err.message}` });
+    }
+};
 
 // Update job
 const updateJob = async (req, res) => {
@@ -89,4 +155,4 @@ const deleteJob = async (req, res) => {
     }
 };
 
-module.exports = { createJob, getAllJobs, getJob, searchJobsText, updateJob, deleteJob };
+module.exports = { createJob, getAllJobs, getUserJobs, getJob, searchJobsText, getApplicantsForJob, getJobsWithApplications, updateJob, deleteJob };

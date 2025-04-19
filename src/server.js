@@ -11,6 +11,7 @@ const User = require('./models/User');
 const profileRoutes = require('./routes/profile');
 const jobRoutes = require('./routes/jobs');
 const studentRoutes = require('./routes/students');
+const applicationRoutes = require('./routes/applicationRoutes');  // Подключаем маршруты откликов
 
 dotenv.config();
 
@@ -67,6 +68,7 @@ app.post("/api/auth/login", async (req, res) => {
 app.use('/api/profile', profileRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/students', studentRoutes);
+app.use('/api/applications', applicationRoutes);  // Добавляем маршруты откликов
 
 // Запуск
 const PORT = process.env.PORT || 8080;

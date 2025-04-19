@@ -17,6 +17,7 @@ async function seedJobs() {
                 deadline: faker.date.future().toISOString().split('T')[0], // Генерация будущего дедлайна
                 description: faker.lorem.paragraph(), // Генерация случайного описания
                 requirements: faker.lorem.sentence(), // Генерация случайных требований
+                userId: faker.number.int({ min: 1, max: 5 })
             });
         }
 
